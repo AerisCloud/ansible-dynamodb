@@ -1,0 +1,6 @@
+- name: "Restart DynamoDB"
+  service: >
+    name=dynamodb
+    state=restarted
+  tags:
+    - dynamodb

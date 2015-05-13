@@ -1,0 +1,57 @@
+- include: centos.yml
+  when: ansible_distribution == 'CentOS'
+
+- include: debian.yml
+  when: ansible_distribution == 'Debian'
+
+- name: "Download the DynamoDB local jar"
+  get_url:
+    url="https://s3-us-west-2.amazonaws.com/dynamodb-local/dynamodb_local_{{ dynamodb_version }}.tar.gz"
+    sha256sum="{{ dynamodb_sha }}"
+    dest=/tmp
+  notify:
+    - Restart DynamoDB
+  register: dynamodb_download
+  tags:
+    - dynamodb
+    - files
+    - pkgs
+
+- name: "Install DynamoDB in /opt/dynamodb"
+  shell: |
+    chdir=/tmp
+    mkdir dynamodb_local_{{ dynamodb_version }} && \
+    cd dynamodb_local_{{ dynamodb_version }} && \
+    tar -zxvf ../dynamodb_local_{{ dynamodb_version }}.tar.gz && \
+    mkdir -p /opt/dynamodb && \
+    rsync -av dynamodb_local_{{ dynamodb_version }}/ /opt/dynamodb/ && \
+    rm -rf dynamodb_local_{{ dynamodb_version }}/
+  when: dynamodb_download.changed
+  tags:
+    - dynamodb
+    - files
+    - pkgs
+
+- name: "Drop an init.d file for DynamoDB"
+  template: >
+    src=dynamodb.init.sh
+    dest=/etc/init.d/dynamodb
+    mode=0700
+    owner=root
+    group=root
+  notify:
+    - Restart DynamoDB
+  tags:
+    - dynamodb
+    - files
+
+- name: "Make sure DynamoDB local development is running"
+  service: >
+    name=dynamodb
+    state=running
+    enabled=yes
+    runlevel=5
+    pattern="DynamoDBLocal.jar"
+  tags:
+    - dynamodb
+    - services

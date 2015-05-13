@@ -1,0 +1,20 @@
+galaxy_info:
+  author: Stephan Donin <sdonin@wizcorp.jp>
+  description: Installs the development version of the Amazon DynamoDB server
+  company: Wizcorp K.K.
+  license: MIT
+  min_ansible_version: 1.8.1
+  platforms:
+    - name: EL
+      versions:
+        - 6
+        - 7
+    - name: Debian
+      versions:
+        - wheezy
+  categories:
+    - development
+    - database
+    - database:nosql
+dependencies:
+  - role: aeriscloud.yum
