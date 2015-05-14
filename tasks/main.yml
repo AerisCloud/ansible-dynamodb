@@ -24,7 +24,7 @@
     cd dynamodb_local_{{ dynamodb_version }} && \
     tar -zxvf ../dynamodb_local_{{ dynamodb_version }}.tar.gz && \
     mkdir -p /opt/dynamodb && \
-    rsync -av dynamodb_local_{{ dynamodb_version }}/ /opt/dynamodb/ && \
+    rsync -av ./ /opt/dynamodb/ && \
     rm -rf dynamodb_local_{{ dynamodb_version }}/
   when: dynamodb_download.changed
   tags:
