@@ -17,4 +17,4 @@ galaxy_info:
     - database
     - database:nosql
 dependencies:
-  - role: aeriscloud.yum
+  - role: AerisCloud.yum
