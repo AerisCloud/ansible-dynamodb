@@ -1,3 +1,9 @@
 dynamodb_port: 18000
 dynamodb_version: 2015-04-27_1.0
 dynamodb_sha: 16c074a787af2572e8d6867c2cff47c02fe1b2eb6c956ae2ca604d844d95331c
+dynamodb_source_url: "https://s3-us-west-2.amazonaws.com/dynamodb-local/dynamodb_local_{{ dynamodb_version }}.tar.gz"
+dynamodb_install_dir: "/opt/dynamodb"
+dynamodb_log_file: "/opt/dynamodb/dynamodb.log"
+dynamodb_log_rotate_file: "/etc/logrotate.d/dynamodb"
+dynamodb_pid_file: "/var/run/dynamodb.pid"
+dynamodb_init_script: "/etc/init.d/dynamodb"

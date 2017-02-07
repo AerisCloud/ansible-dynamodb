@@ -6,9 +6,9 @@
 
 - name: "Download the DynamoDB local jar"
   get_url:
-    url="https://s3-us-west-2.amazonaws.com/dynamodb-local/dynamodb_local_{{ dynamodb_version }}.tar.gz"
-    sha256sum="{{ dynamodb_sha }}"
-    dest=/tmp
+    url: "{{ dynamodb_source_url }}"
+    sha256sum: "{{ dynamodb_sha }}"
+    dest: /tmp
   notify:
     - Restart DynamoDB
   register: dynamodb_download
@@ -17,28 +17,39 @@
     - files
     - pkgs
 
-- name: "Install DynamoDB in /opt/dynamodb"
+- name: "Install DynamoDB in {{ dynamodb_install_dir }}"
   shell: |
-    chdir=/tmp
     mkdir dynamodb_local_{{ dynamodb_version }} && \
     cd dynamodb_local_{{ dynamodb_version }} && \
     tar -zxvf ../dynamodb_local_{{ dynamodb_version }}.tar.gz && \
-    mkdir -p /opt/dynamodb && \
-    rsync -av ./ /opt/dynamodb/ && \
+    mkdir -p "{{ dynamodb_install_dir }}" && \
+    rsync -av ./ "{{ dynamodb_install_dir }}" && \
+    cd .. && \
     rm -rf dynamodb_local_{{ dynamodb_version }}/
+  args:
+    chdir: /tmp
   when: dynamodb_download.changed
   tags:
     - dynamodb
     - files
     - pkgs
 
+- name: "Enable log rotation"
+  template:
+    src: dynamodb_local_log_rotate.conf
+    dest: "{{ dynamodb_log_rotate_file }}"
+    mode: 0644
+  tags:
+    - dynamodb
+    - files
+
 - name: "Drop an init.d file for DynamoDB"
-  template: >
-    src=dynamodb.init.sh
-    dest=/etc/init.d/dynamodb
-    mode=0700
-    owner=root
-    group=root
+  template:
+    src: dynamodb.init.sh
+    dest: "{{ dynamodb_init_script }}"
+    mode: 0700
+    owner: root
+    group: root
   notify:
     - Restart DynamoDB
   tags:
@@ -46,12 +57,12 @@
     - files
 
 - name: "Make sure DynamoDB local development is running"
-  service: >
-    name=dynamodb
-    state=running
-    enabled=yes
-    runlevel=5
-    pattern="DynamoDBLocal.jar"
+  service:
+    name: dynamodb
+    state: running
+    enabled: yes
+    runlevel: 5
+    pattern: "DynamoDBLocal.jar"
   tags:
     - dynamodb
     - services

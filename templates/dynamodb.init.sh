@@ -9,7 +9,7 @@
 JAVAMEM=256M
 
 # Location of dynamodb files
-LOCATION="/opt/dynamodb"
+LOCATION="{{ dynamodb_install_dir }}"
 
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
@@ -18,8 +18,8 @@ DAEMON="$(which java)"
 ARGS="-Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar --port {{ dynamodb_port }}"
 JAR_NAME="DynamoDBLocal.jar"
 
-LOGFILE="/opt/dynamodb/dynamodb.log"
-PID_FILE="/var/run/dynamodb.pid"
+LOGFILE="{{ dynamodb_log_file }}"
+PID_FILE="{{ dynamodb_pid_file }}"
 
 # Exit if the package is not installed
 if [ ! -x "$DAEMON" ]; then
