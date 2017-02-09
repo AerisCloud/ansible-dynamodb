@@ -12,7 +12,7 @@ dynamodb_log_file: "{{ dynamodb_log_dir }}/dynamodb.log"
 dynamodb_pid_file: "/var/run/dynamodb.pid"
 # run scripts
 dynamodb_init_script: "/etc/init.d/dynamodb"
-dynamodb_service_file: "/lib/systemd/system/dynamodb.service"
+dynamodb_service_file: "/etc/systemd/system/dynamodb.service"
 # flags
 dynamodb_install_java: true
 dynamodb_use_systemd: true

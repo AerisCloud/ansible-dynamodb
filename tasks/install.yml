@@ -1,0 +1,47 @@
+- name: "Download the DynamoDB local jar"
+  get_url:
+    url: "{{ dynamodb_source_url }}"
+    sha256sum: "{{ dynamodb_sha }}"
+    dest: /tmp
+  when: current_sha.stdout != dynamodb_sha
+  register: dynamodb_download
+  tags:
+    - dynamodb
+    - files
+    - pkgs
+
+# Extract directly to the installation directory
+- name: "Extract installation archive"
+  unarchive:
+    src: "/tmp/dynamodb_local_{{ dynamodb_version }}.tar.gz"
+    dest: "{{ dynamodb_install_dir }}"
+    remote_src: True
+  tags:
+    - dynamodb
+    - files
+
+# We are done with the archive, delete it
+- name: "Delete archive"
+  file:
+    path: "/tmp/dynamodb_local_{{ dynamodb_version }}.tar.gz"
+    state: absent
+
+# Recursively update file modes
+- name: "Set user rights"
+  file:
+    path: "{{ dynamodb_install_dir }}"
+    state: directory
+    mode: u=rwX,g=rX,o=rX
+    owner: dynamodb
+    group: dynamodb
+    recurse: yes
+  tags:
+    - dynamodb
+    - files
+
+- name: "Store current checksum"
+  copy:
+    content: "{{ dynamodb_sha }}"
+    dest: "{{ dynamodb_install_dir }}/sha256sum"
+    owner: dynamodb
+    group: dynamodb
