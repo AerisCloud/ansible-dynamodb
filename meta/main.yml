@@ -3,7 +3,7 @@ galaxy_info:
   description: Installs the development version of the Amazon DynamoDB server
   company: Wizcorp K.K.
   license: MIT
-  min_ansible_version: 1.8.1
+  min_ansible_version: 2.0
   platforms:
     - name: EL
       versions:
@@ -12,9 +12,8 @@ galaxy_info:
     - name: Debian
       versions:
         - wheezy
+        - jessie
   categories:
     - development
     - database
     - database:nosql
-dependencies:
-  - role: AerisCloud.yum

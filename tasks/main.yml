@@ -1,34 +1,91 @@
-- include: centos.yml
-  when: ansible_distribution == 'CentOS'
+- name: "Load distribution variables"
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}.yml"
+    - "{{ ansible_os_family }}.yml"
+    - "default.yml"
+  when: dynamodb_install_java == True
+  tags:
+    - dynamodb
+    - pkgs
 
-- include: debian.yml
-  when: ansible_distribution == 'Debian'
+- name: "Install headless JRE"
+  package: name={{ dynamodb_java_package }} state=present
+  when: dynamodb_install_java == True and dynamodb_java_package != False
+  tags:
+    - dynamodb
+    - pkgs
+
+- name: "Check currently installed version"
+  shell: cat {{ dynamodb_install_dir }}/sha256sum
+  ignore_errors: True
+  changed_when: current_sha.stdout != dynamodb_sha
+  register: current_sha
 
 - name: "Download the DynamoDB local jar"
   get_url:
     url: "{{ dynamodb_source_url }}"
     sha256sum: "{{ dynamodb_sha }}"
     dest: /tmp
-  notify:
-    - Restart DynamoDB
+  when: current_sha.stdout != dynamodb_sha
   register: dynamodb_download
   tags:
     - dynamodb
     - files
     - pkgs
 
+- name: "Setup dynamodb user"
+  user:
+    name: dynamodb
+    comment: "DynamoDB user"
+    system: yes
+  tags:
+    - dynamodb
+    - users
+
+- name: "Create directories"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0755
+    owner: dynamodb
+    group: dynamodb
+  with_items:
+    - "{{ dynamodb_install_dir }}"
+    - "{{ dynamodb_data_dir }}"
+  tags:
+    - dynamodb
+    - files
+
+- name: "Create log directory"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0755
+    owner: dynamodb
+    group: dynamodb
+  with_items:
+    - "{{ dynamodb_log_dir }}"
+  when: dynamodb_use_systemd != True
+  tags:
+    - dynamodb
+    - files
+
 - name: "Install DynamoDB in {{ dynamodb_install_dir }}"
   shell: |
     mkdir dynamodb_local_{{ dynamodb_version }} && \
     cd dynamodb_local_{{ dynamodb_version }} && \
     tar -zxvf ../dynamodb_local_{{ dynamodb_version }}.tar.gz && \
-    mkdir -p "{{ dynamodb_install_dir }}" && \
     rsync -av ./ "{{ dynamodb_install_dir }}" && \
     cd .. && \
-    rm -rf dynamodb_local_{{ dynamodb_version }}/
+    rm -rf dynamodb_local_{{ dynamodb_version }}/ && \
+    echo "{{ dynamodb_sha }}" > "{{ dynamodb_install_dir }}/sha256sum" && \
+    chown -R dynamodb:dynamodb "{{ dynamodb_install_dir }}"
   args:
     chdir: /tmp
-  when: dynamodb_download.changed
+  notify:
+    - Restart DynamoDB
+  when: dynamodb_download.changed and current_sha.stdout != dynamodb_sha
   tags:
     - dynamodb
     - files
@@ -39,6 +96,7 @@
     src: dynamodb_local_log_rotate.conf
     dest: "{{ dynamodb_log_rotate_file }}"
     mode: 0644
+  when: dynamodb_use_systemd != True
   tags:
     - dynamodb
     - files
@@ -52,9 +110,25 @@
     group: root
   notify:
     - Restart DynamoDB
+  when: dynamodb_use_systemd != True
   tags:
     - dynamodb
     - files
+
+- name: "Drop an service file for DynamoDB"
+  template:
+    src: dynamodb.service
+    dest: "{{ dynamodb_service_file }}"
+    mode: 0700
+    owner: root
+    group: root
+  notify:
+    - Reload systemd
+    - Restart DynamoDB
+  tags:
+    - dynamodb
+    - files
+  when: dynamodb_use_systemd == True
 
 - name: "Make sure DynamoDB local development is running"
   service:

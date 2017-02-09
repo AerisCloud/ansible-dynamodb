@@ -15,7 +15,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 NAME="dynamodb"
 DAEMON="$(which java)"
-ARGS="-Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar --port {{ dynamodb_port }}"
+ARGS="-Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb -dbPath {{ dynamodb_data_dir }} -port {{ dynamodb_port }}"
 JAR_NAME="DynamoDBLocal.jar"
 
 LOGFILE="{{ dynamodb_log_file }}"
