@@ -1,0 +1,36 @@
+- name: "Setup dynamodb user"
+  user:
+    name: dynamodb
+    comment: "DynamoDB user"
+    system: yes
+  tags:
+    - dynamodb
+    - users
+
+- name: "Create directories"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0755
+    owner: dynamodb
+    group: dynamodb
+  with_items:
+    - "{{ dynamodb_install_dir }}"
+    - "{{ dynamodb_data_dir }}"
+  tags:
+    - dynamodb
+    - files
+
+- name: "Create log directory"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0755
+    owner: dynamodb
+    group: dynamodb
+  with_items:
+    - "{{ dynamodb_log_dir }}"
+  when: dynamodb_use_systemd|bool != True
+  tags:
+    - dynamodb
+    - files

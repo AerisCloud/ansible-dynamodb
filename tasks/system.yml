@@ -1,0 +1,40 @@
+# When not using systemd, install a logrotate file to deal with the logs
+- name: "Enable log rotation"
+  template:
+    src: dynamodb_local_log_rotate.conf
+    dest: "{{ dynamodb_log_rotate_file }}"
+    mode: 0644
+  when: dynamodb_use_systemd|bool != True
+  tags:
+    - dynamodb
+    - files
+
+- name: "Drop an init.d file for DynamoDB"
+  template:
+    src: dynamodb.init.sh
+    dest: "{{ dynamodb_init_script }}"
+    mode: 0700
+    owner: root
+    group: root
+  notify:
+    - Restart DynamoDB
+  when: dynamodb_use_systemd|bool != True
+  tags:
+    - dynamodb
+    - files
+
+# Setup service file if using systemd, logrotate is not used in this case since logs go through the journal
+- name: "Drop an service file for DynamoDB"
+  template:
+    src: dynamodb.service
+    dest: "{{ dynamodb_service_file }}"
+    mode: 0700
+    owner: root
+    group: root
+  notify:
+    - Reload systemd
+    - Restart DynamoDB
+  tags:
+    - dynamodb
+    - files
+  when: dynamodb_use_systemd|bool == True
