@@ -47,7 +47,7 @@
 - name: "Make sure DynamoDB local development is running"
   service:
     name: dynamodb
-    state: running
+    state: started
     enabled: yes
     runlevel: 5
     pattern: "DynamoDBLocal.jar"

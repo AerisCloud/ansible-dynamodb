@@ -1,0 +1,47 @@
+---
+driver:
+  # we cannot use the docker driver since we depend on systemd
+  name: docker
+  use_sudo: false
+
+provisioner:
+  name: ansible_playbook
+  require_ansible_repo: true
+  require_chef_omnibus: false
+  hosts: host
+
+platforms:
+  - name: ubuntu-16.04
+    driver_config:
+      run_command: /sbin/init
+      privileged: true
+  - name: centos-7.4
+    driver_config:
+      image: centos/systemd
+      run_command: /usr/sbin/init
+      privileged: true
+      provision_command:
+        # allows kitchen to login
+        - sed -i 's/UsePAM yes/UsePAM no/g' /etc/ssh/sshd_config
+        # necessary for serverspec
+        - yum install -y iproute
+        - systemctl enable sshd.service
+  - name: debian-8
+    driver_config:
+      run_command: /sbin/init
+      privileged: true
+
+verifier:
+  name: serverspec
+  sudo_path: true
+
+suites:
+  - name: default
+    run_list:
+    attributes:
+    verifier:
+      default_pattern: true
+      # see https://github.com/neillturner/kitchen-verifier-serverspec/issues/29
+      additional_serverspec_command: 'if [ ! -f /tmp/verifier/suites ]; then mkdir -p /tmp/verifier/suites && ln -sf /tmp/verifier/serverspec /tmp/verifier/suites/serverspec; fi'
+      bundler_path: /usr/local/bin
+      rspec_path: /usr/local/bin
